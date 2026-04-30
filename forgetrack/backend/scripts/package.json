@@ -1,0 +1,17 @@
+{
+  "name": "forgetrack",
+  "version": "1.0.0",
+  "description": "",
+  "main": "fix_auth.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.1",
+    "bcryptjs": "^3.0.3",
+    "pg": "^8.20.0"
+  }
+}

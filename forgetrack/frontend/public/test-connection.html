@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ForgeTrack DB Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #0a0a0c; color: white; }
+        .log { background: #1a1a1c; padding: 10px; border-radius: 4px; margin-top: 10px; font-family: monospace; }
+        .error { color: #ff5555; }
+        .success { color: #55ff55; }
+    </style>
+</head>
+<body>
+    <h1>ForgeTrack Supabase Connection Test</h1>
+    <p>This page tests if your browser can actually talk to Supabase without any React overhead.</p>
+    
+    <button onclick="runTest()">Run Connection Test</button>
+    <div id="output" class="log">Click the button to start...</div>
+
+    <script>
+        const SB_URL = 'https://lywfynijjbkcgifjkhux.supabase.co';
+        const SB_KEY = 'sb_publishable_--4HrjyIrxs93SFXoiCYaQ_P2v-XUYF';
+
+        async function runTest() {
+            const out = document.getElementById('output');
+            out.innerHTML = "Initializing client...<br>";
+            
+            try {
+                const client = supabase.createClient(SB_URL, SB_KEY);
+                out.innerHTML += "Client initialized. Testing connection to 'users' table...<br>";
+                
+                const { data, error } = await client
+                    .from('users')
+                    .select('id')
+                    .limit(1);
+
+                if (error) {
+                    out.innerHTML += `<span class="error">Connection Failed: ${error.message}</span><br>`;
+                    out.innerHTML += `Code: ${error.code}<br>`;
+                } else {
+                    out.innerHTML += `<span class="success">Connection Successful!</span><br>`;
+                    out.innerHTML += `The browser can reach your database. This proves the issue is NOT a network block.<br>`;
+                }
+
+                out.innerHTML += "<br>Testing Login API...<br>";
+                const { error: loginError } = await client.auth.signInWithPassword({
+                    email: 'test@fake.com',
+                    password: 'wrong'
+                });
+
+                if (loginError && loginError.message === 'Invalid login credentials') {
+                    out.innerHTML += `<span class="success">Auth API reached successfully!</span> (Got expected "Invalid credentials" error).<br>`;
+                } else if (loginError) {
+                    out.innerHTML += `<span class="error">Auth API Failed: ${loginError.message}</span><br>`;
+                }
+
+            } catch (err) {
+                out.innerHTML += `<span class="error">Unexpected Error: ${err.message}</span><br>`;
+            }
+        }
+    </script>
+</body>
+</html>
