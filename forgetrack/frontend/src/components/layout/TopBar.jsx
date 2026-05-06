@@ -34,12 +34,21 @@ export const TopBar = () => {
   }, [searchQuery]);
 
   const fetchSuggestions = async () => {
-    const { data } = await supabase
-      .from('students')
-      .select('id, name, usn')
-      .or(`name.ilike.%${searchQuery}%,usn.ilike.%${searchQuery}%`)
-      .limit(5);
-    setSuggestions(data || []);
+    if (profile?.role === 'mentor') {
+      const { data } = await supabase
+        .from('students')
+        .select('id, name, usn')
+        .or(`name.ilike.%${searchQuery}%,usn.ilike.%${searchQuery}%`)
+        .limit(5);
+      setSuggestions(data || []);
+    } else {
+      const { data } = await supabase
+        .from('sessions')
+        .select('id, topic, date')
+        .ilike('topic', `%${searchQuery}%`)
+        .limit(5);
+      setSuggestions(data || []);
+    }
   };
 
   const handleSearch = (e) => {
@@ -49,27 +58,37 @@ export const TopBar = () => {
   };
 
   const executeSearch = (query) => {
-    console.log('TopBar: Searching for:', query);
-    navigate(`/history?search=${encodeURIComponent(query)}`);
+    if (profile?.role === 'mentor') {
+      navigate(`/history?search=${encodeURIComponent(query)}`);
+    } else {
+      navigate(`/me/attendance?search=${encodeURIComponent(query)}`);
+    }
     setSearchQuery('');
     setShowSuggestions(false);
   };
 
   return (
-    <header className="h-16 flex items-center justify-between px-6 lg:px-12 pt-8 pb-4">
-      <div className="text-body-sm text-fg-tertiary flex items-center gap-2">
-        <span>Overview</span>
-        <span>/</span>
-        <span className="text-fg-primary">{currentRouteName}</span>
+    <header className="h-24 flex items-center justify-between px-6 lg:px-12 z-40 relative">
+      <div className="flex items-center gap-8">
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="w-1.5 h-7 bg-accent-primary rounded-full shadow-[0_0_20px_rgba(215,241,74,0.4)] transition-all group-hover:scale-y-110"></div>
+          <h1 className="text-2xl font-display font-bold tracking-tight text-white uppercase">ForgeTrack</h1>
+        </Link>
+        
+        <div className="hidden lg:flex items-center gap-2 text-[11px] font-bold tracking-widest text-fg-tertiary uppercase opacity-40">
+          <span>{currentRouteName}</span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-8">
         <div className="relative hidden md:block">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-fg-tertiary" />
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-fg-tertiary pointer-events-none group">
+            <Search className="w-4 h-4 transition-colors group-focus-within:text-accent-primary" />
+          </div>
           <input 
             type="text" 
-            placeholder="Search students, sessions..." 
-            className="input w-64 pl-10 h-10 bg-surface text-body-sm focus:ring-2 focus:ring-indigo-500/20"
+            placeholder={profile?.role === 'mentor' ? 'Search students...' : 'Search session topics...'} 
+            className="w-72 pl-12 pr-4 h-11 bg-white/5 border border-white/5 rounded-xl text-sm transition-all focus:outline-none focus:border-white/10 focus:bg-white/[0.08] focus:w-80"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -79,8 +98,8 @@ export const TopBar = () => {
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           />
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 w-full mt-4 bg-[#0A0A0A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="text-[10px] font-bold tracking-[0.2em] text-fg-tertiary px-4 pt-4 pb-2 uppercase opacity-50">Results</div>
+            <div className="absolute top-full left-0 w-full mt-4 bg-bg-card-solid/90 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden z-[100]">
+              <div className="text-[10px] font-bold tracking-[0.2em] text-fg-tertiary px-4 pt-4 pb-2 uppercase opacity-40">Quick Results</div>
               {suggestions.map(s => (
                 <div 
                   key={s.id} 
@@ -90,22 +109,28 @@ export const TopBar = () => {
                     executeSearch(s.usn);
                   }}
                 >
-                  <div className="text-body-sm font-medium text-fg-primary group-hover:text-indigo-400 transition-colors">{s.name}</div>
-                  <div className="text-[11px] text-fg-tertiary font-mono">{s.usn}</div>
+                  <div className="text-sm font-medium text-fg-primary group-hover:text-accent-primary transition-colors">
+                    {profile?.role === 'mentor' ? s.name : s.topic}
+                  </div>
+                  <div className="text-[11px] text-fg-tertiary font-mono">
+                    {profile?.role === 'mentor' ? s.usn : new Date(s.date).toLocaleDateString()}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-        <Link to="/profile" className="flex items-center gap-3 hover:bg-white/[0.03] p-1.5 rounded-xl transition-colors group">
-          <div className="text-right hidden sm:block">
-            <div className="text-body-sm font-medium group-hover:text-indigo-400 transition-colors">{profile?.display_name}</div>
-            <div className="text-caption text-fg-tertiary capitalize">{profile?.role}</div>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-surface-raised border border-border-default flex items-center justify-center text-body-lg font-medium group-hover:border-indigo-500/50 transition-colors overflow-hidden">
-            {profile?.display_name?.charAt(0) || <User className="w-5 h-5 text-fg-tertiary" />}
-          </div>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link to="/profile" className="flex items-center gap-4 group">
+            <div className="text-right hidden sm:block">
+              <div className="text-sm font-bold text-white group-hover:text-accent-primary transition-colors">{profile?.display_name}</div>
+              <div className="text-[10px] font-bold tracking-widest text-fg-tertiary uppercase opacity-40">{profile?.role}</div>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center text-lg font-display font-bold group-hover:border-accent-primary/50 transition-all overflow-hidden shadow-lg">
+              {profile?.display_name?.charAt(0) || <User className="w-5 h-5 text-fg-tertiary" />}
+            </div>
+          </Link>
+        </div>
       </div>
     </header>
   );

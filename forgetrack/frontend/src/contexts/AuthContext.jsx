@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
       console.log("fetchProfile: Executing Supabase query...");
       const fetchPromise = supabase
         .from('users')
-        .select('id, email, role, display_name')
+        .select('id, email, role, display_name, student_id')
         .eq('id', userId)
         .maybeSingle();
 

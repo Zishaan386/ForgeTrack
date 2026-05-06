@@ -12,8 +12,11 @@ import { Attendance } from './pages/Attendance';
 import { History } from './pages/History';
 import { Materials } from './pages/Materials';
 import { 
-  StudentAttendance, StudentUpcoming, StudentMaterials 
-} from './pages/Placeholders';
+  StudentAttendance 
+} from './pages/StudentAttendance';
+import { 
+  StudentUpcoming 
+} from './pages/StudentUpcoming';
 import { Upload } from './pages/Upload';
 import { Profile } from './pages/Profile';
 
@@ -81,7 +84,7 @@ function App() {
           }>
             <Route path="/me/attendance" element={<StudentAttendance />} />
             <Route path="/me/upcoming" element={<StudentUpcoming />} />
-            <Route path="/me/materials" element={<StudentMaterials />} />
+            <Route path="/me/materials" element={<Materials />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
 

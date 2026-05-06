@@ -1,70 +1,40 @@
 const { Client } = require('pg');
-
-const connectionString = 'postgresql://postgres:Skill60forge@db.lywfynijjbkcgifjkhux.supabase.co:5432/postgres';
+const client = new Client({ connectionString: 'postgresql://postgres:Skill60forge@db.lywfynijjbkcgifjkhux.supabase.co:5432/postgres' });
 
 async function fixRLS() {
-  const client = new Client({ connectionString });
-  
+  await client.connect();
   try {
-    await client.connect();
-    console.log("Connected. Fixing recursive RLS policies...");
-
-    const sql = `
-      -- 1. Drop the problematic recursive policies
-      DROP POLICY IF EXISTS "users_read_all" ON public.users;
-      DROP POLICY IF EXISTS "users_mentor_all" ON public.users;
-      DROP POLICY IF EXISTS "students_mentor_all" ON public.students;
-      DROP POLICY IF EXISTS "sessions_mentor_all" ON public.sessions;
-      DROP POLICY IF EXISTS "attendance_mentor_all" ON public.attendance;
-      DROP POLICY IF EXISTS "materials_mentor_all" ON public.materials;
-      DROP POLICY IF EXISTS "import_log_mentor_all" ON public.import_log;
-
-      -- 2. Create non-recursive policies using auth.jwt()
-      -- This avoids the "Database error querying schema" infinite loop
+    console.log('Updating RLS policies to use JWT metadata (avoiding recursion)...');
+    
+    const setupTable = async (tableName) => {
+      await client.query(`ALTER TABLE public.${tableName} ENABLE ROW LEVEL SECURITY;`);
       
-      -- Public Users Table
-      CREATE POLICY "users_read_all" ON public.users FOR SELECT USING (true);
-      CREATE POLICY "users_mentor_all" ON public.users FOR ALL USING (
-          (auth.jwt() -> 'user_metadata' ->> 'role') = 'mentor'
-      );
+      // Select Policy: Everyone authenticated can read
+      await client.query(`DROP POLICY IF EXISTS "Allow authenticated read ${tableName}" ON public.${tableName};`);
+      await client.query(`CREATE POLICY "Allow authenticated read ${tableName}" ON public.${tableName} FOR SELECT TO authenticated USING (true);`);
+      
+      // Write Policy: Only mentors can write (check JWT metadata)
+      await client.query(`DROP POLICY IF EXISTS "Allow mentor write ${tableName}" ON public.${tableName};`);
+      await client.query(`CREATE POLICY "Allow mentor write ${tableName}" ON public.${tableName} FOR ALL TO authenticated USING (
+        (auth.jwt() -> 'raw_user_meta_data' ->> 'role') = 'mentor'
+      );`);
+    };
 
-      -- Students Table
-      CREATE POLICY "students_mentor_all" ON public.students FOR ALL USING (
-          (auth.jwt() -> 'user_metadata' ->> 'role') = 'mentor'
-      );
-      CREATE POLICY "students_read_own" ON public.students FOR SELECT USING (
-          id = ((auth.jwt() -> 'user_metadata' ->> 'student_id')::integer)
-      );
+    await setupTable('students');
+    await setupTable('attendance');
+    await setupTable('sessions');
+    await setupTable('materials');
+    
+    // Users table policy
+    await client.query('ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;');
+    await client.query('DROP POLICY IF EXISTS "Allow users read own and mentors read all" ON public.users;');
+    await client.query(`CREATE POLICY "Allow users read own and mentors read all" ON public.users FOR SELECT TO authenticated USING (
+      auth.uid() = id OR (auth.jwt() -> 'raw_user_meta_data' ->> 'role') = 'mentor'
+    );`);
 
-      -- Sessions Table
-      CREATE POLICY "sessions_mentor_all" ON public.sessions FOR ALL USING (
-          (auth.jwt() -> 'user_metadata' ->> 'role') = 'mentor'
-      );
-
-      -- Attendance Table
-      CREATE POLICY "attendance_mentor_all" ON public.attendance FOR ALL USING (
-          (auth.jwt() -> 'user_metadata' ->> 'role') = 'mentor'
-      );
-      CREATE POLICY "attendance_read_own" ON public.attendance FOR SELECT USING (
-          student_id = ((auth.jwt() -> 'user_metadata' ->> 'student_id')::integer)
-      );
-
-      -- Materials Table
-      CREATE POLICY "materials_mentor_all" ON public.materials FOR ALL USING (
-          (auth.jwt() -> 'user_metadata' ->> 'role') = 'mentor'
-      );
-
-      -- Import Log Table
-      CREATE POLICY "import_log_mentor_all" ON public.import_log FOR ALL USING (
-          (auth.jwt() -> 'user_metadata' ->> 'role') = 'mentor'
-      );
-    `;
-
-    await client.query(sql);
-    console.log("Fixed all recursive RLS policies successfully.");
-
+    console.log('RLS Policies updated successfully using JWT metadata.');
   } catch (err) {
-    console.error("Error executing SQL:", err);
+    console.error('Error updating RLS:', err);
   } finally {
     await client.end();
   }
