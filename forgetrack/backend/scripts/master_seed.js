@@ -70,7 +70,7 @@ async function masterSeed() {
 
     // 3. Seed Mentors
     console.log("Seeding mentors...");
-    await createUser('nischay@theboringpeople.in', 'password123', 'mentor', 'Nischay B K');
+    await createUser('Zishaan@theboringpeople.in', 'password123', 'mentor', 'Zishaan B K');
     await createUser('varun@theboringpeople.in', 'password123', 'mentor', 'Varun');
 
     // 4. Seed Students

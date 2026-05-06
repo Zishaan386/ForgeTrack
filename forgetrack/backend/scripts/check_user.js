@@ -8,7 +8,7 @@ async function checkUser() {
   try {
     await client.connect();
     
-    const res = await client.query("SELECT email, encrypted_password FROM auth.users WHERE email = 'nischay@theboringpeople.in';");
+    const res = await client.query("SELECT email, encrypted_password FROM auth.users WHERE email = 'Zishaan@theboringpeople.in';");
     console.log(`Mentor user:`, res.rows[0]);
 
   } catch (err) {

@@ -79,15 +79,19 @@ export const TopBar = () => {
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           />
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 w-full mt-2 bg-[#050505] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,1)] overflow-hidden z-[100] backdrop-blur-xl">
+            <div className="absolute top-full left-0 w-full mt-4 bg-[#0A0A0A]/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="text-[10px] font-bold tracking-[0.2em] text-fg-tertiary px-4 pt-4 pb-2 uppercase opacity-50">Results</div>
               {suggestions.map(s => (
                 <div 
                   key={s.id} 
-                  className="px-4 py-3 hover:bg-white/5 cursor-pointer flex flex-col border-b border-white/5 last:border-0"
-                  onClick={() => executeSearch(s.usn)}
+                  className="px-4 py-3 hover:bg-white/[0.05] cursor-pointer flex flex-col border-b border-white/5 last:border-0 transition-colors group"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    executeSearch(s.usn);
+                  }}
                 >
-                  <div className="text-body-sm font-medium text-fg-primary">{s.name}</div>
-                  <div className="text-caption text-fg-tertiary">{s.usn}</div>
+                  <div className="text-body-sm font-medium text-fg-primary group-hover:text-indigo-400 transition-colors">{s.name}</div>
+                  <div className="text-[11px] text-fg-tertiary font-mono">{s.usn}</div>
                 </div>
               ))}
             </div>

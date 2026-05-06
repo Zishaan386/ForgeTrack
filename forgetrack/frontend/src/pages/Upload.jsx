@@ -14,7 +14,13 @@ export const Upload = () => {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile && selectedFile.type === 'text/csv') {
+    const isCsv = selectedFile && (
+      selectedFile.type === 'text/csv' || 
+      selectedFile.type === 'application/vnd.ms-excel' || 
+      selectedFile.name.toLowerCase().endsWith('.csv')
+    );
+
+    if (isCsv) {
       setFile(selectedFile);
       setError(null);
     } else {

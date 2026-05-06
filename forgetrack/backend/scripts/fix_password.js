@@ -12,8 +12,8 @@ async function fixPassword() {
     const hash = await bcrypt.hash('password123', 10);
     console.log(`Generated hash: ${hash}`);
 
-    const res = await client.query("UPDATE auth.users SET encrypted_password = $1 WHERE email = 'nischay@theboringpeople.in';", [hash]);
-    console.log(`Updated password for Nischay. Rows affected: ${res.rowCount}`);
+    const res = await client.query("UPDATE auth.users SET encrypted_password = $1 WHERE email = 'Zishaan@theboringpeople.in';", [hash]);
+    console.log(`Updated password for Zishaan. Rows affected: ${res.rowCount}`);
 
   } catch (err) {
     console.error("Error executing SQL:", err);

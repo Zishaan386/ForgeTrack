@@ -6,11 +6,11 @@ const supabaseKey = 'sb_publishable_--4HrjyIrxs93SFXoiCYaQ_P2v-XUYF';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function testFetch() {
-  console.log("Attempting to fetch profile for nischay from public.users using anon key...");
+  console.log("Attempting to fetch profile for Zishaan from public.users using anon key...");
   const { data, error } = await supabase
     .from('users')
     .select('*')
-    .eq('email', 'nischay@theboringpeople.in')
+    .eq('email', 'Zishaan@theboringpeople.in')
     .single();
 
   if (error) {

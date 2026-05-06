@@ -6,9 +6,9 @@ const supabaseKey = 'sb_publishable_--4HrjyIrxs93SFXoiCYaQ_P2v-XUYF';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function testLogin() {
-  console.log("Attempting login for nischay@theboringpeople.in...");
+  console.log("Attempting login for Zishaan@theboringpeople.in...");
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: 'nischay@theboringpeople.in',
+    email: 'Zishaan@theboringpeople.in',
     password: 'password123',
   });
 

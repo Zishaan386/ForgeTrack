@@ -7,16 +7,16 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- We need to create the mentor users in auth.users and public.users
 DO $$
 DECLARE
-    nischay_id UUID := uuid_generate_v4();
+    Zishaan_id UUID := uuid_generate_v4();
     varun_id UUID := uuid_generate_v4();
 BEGIN
-    -- Mentor: Nischay
+    -- Mentor: Zishaan
     INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, is_super_admin)
     VALUES (
-        nischay_id, '00000000-0000-0000-0000-000000000000', 'nischay@theboringpeople.in', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', json_build_object('role', 'mentor', 'display_name', 'Nischay B K'), now(), now(), 'authenticated', false
+        Zishaan_id, '00000000-0000-0000-0000-000000000000', 'Zishaan@theboringpeople.in', crypt('password123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', json_build_object('role', 'mentor', 'display_name', 'Zishaan B K'), now(), now(), 'authenticated', false
     );
     INSERT INTO public.users (id, email, role, student_id, display_name)
-    VALUES (nischay_id, 'nischay@theboringpeople.in', 'mentor', NULL, 'Nischay B K');
+    VALUES (Zishaan_id, 'Zishaan@theboringpeople.in', 'mentor', NULL, 'Zishaan B K');
 
     -- Mentor: Varun
     INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, is_super_admin)
@@ -96,7 +96,7 @@ BEGIN
             is_present := random() < 0.8;
             
             INSERT INTO public.attendance (student_id, session_id, present, marked_by)
-            VALUES (student.id, sess.id, is_present, 'Nischay B K');
+            VALUES (student.id, sess.id, is_present, 'Zishaan B K');
         END LOOP;
     END LOOP;
 END $$;
@@ -121,5 +121,5 @@ END $$;
 -- 6. Import Log
 -------------------------------------------------------------------------------
 INSERT INTO public.import_log (filename, uploaded_by, total_rows, imported_rows, skipped_rows, status) VALUES
-('month2_attendance.csv', 'Nischay B K', 120, 118, 2, 'completed'),
+('month2_attendance.csv', 'Zishaan B K', 120, 118, 2, 'completed'),
 ('month3_attendance.xlsx', 'Varun', 125, 125, 0, 'completed');

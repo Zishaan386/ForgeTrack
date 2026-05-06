@@ -16,7 +16,7 @@ export const Dashboard = () => {
     activeStudents: 0,
     lastSessionDate: '-'
   });
-  const [todaySession, setTodaySession] = useState(null);
+  const [todaySessions, setTodaySessions] = useState([]);
   const [todayAttendance, setTodayAttendance] = useState({ present: 0, total: 0, absentees: [] });
   const [recentActivity, setRecentActivity] = useState([]);
   const [error, setError] = useState(null);
@@ -80,22 +80,27 @@ export const Dashboard = () => {
         lastSessionDate
       });
 
-      // 4. Today's Session
+      // 4. Today's Sessions
       const today = new Date().toISOString().split('T')[0];
-      const todaySess = sessions?.find(s => s.date === today);
-      setTodaySession(todaySess || null);
+      const todaySessList = sessions?.filter(s => s.date === today) || [];
+      setTodaySessions(todaySessList);
 
-      if (todaySess && studentCount) {
+      if (todaySessList.length > 0 && studentCount) {
+        const sessionIds = todaySessList.map(s => s.id);
         const { data: attData, error: todayAttError } = await supabase
           .from('attendance')
-          .select('present, students(name)')
-          .eq('session_id', todaySess.id);
+          .select('present, students(name, usn), sessions(topic)')
+          .in('session_id', sessionIds);
 
         if (todayAttError) throw todayAttError;
 
         const present = attData?.filter(a => a.present).length || 0;
         const absentees = attData?.filter(a => !a.present) || [];
-        setTodayAttendance({ present, total: studentCount, absentees });
+        setTodayAttendance({ 
+          present, 
+          total: studentCount * todaySessList.length, 
+          absentees 
+        });
       }
 
       // 5. Recent Activity
@@ -174,25 +179,40 @@ export const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Card 1: Today's Session */}
+        {/* Card 1: Today's Sessions */}
         <Card className="bg-surface border-border-default">
           <CardHeader>
-            <CardTitle className="text-h3">Today's Session</CardTitle>
+            <CardTitle className="text-h3 flex items-center justify-between">
+              Today's Sessions
+              <span className="text-body-sm font-normal text-fg-tertiary">{todaySessions.length} Scheduled</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-fg-secondary">Loading...</div>
-            ) : todaySession ? (
+            ) : todaySessions.length > 0 ? (
               <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-surface-inset border border-border-subtle">
-                  <div className="text-h3 text-fg-primary mb-1">{todaySession.topic}</div>
-                  <div className="text-body-sm text-fg-secondary flex gap-2">
-                    <span className="pill pill-success capitalize">{todaySession.session_type}</span>
-                    <span className="pill bg-surface-raised border border-border-subtle text-fg-secondary">{todaySession.duration_hours} Hrs</span>
-                  </div>
+                <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                  {todaySessions.map((s, i) => (
+                    <div key={s.id} className="p-4 rounded-xl bg-surface-inset border border-border-subtle group hover:border-indigo-500/30 transition-all">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-body font-bold text-fg-primary mb-1">{s.topic}</div>
+                          <div className="text-[10px] text-fg-tertiary flex gap-2 font-bold uppercase tracking-wider">
+                            <span className="text-indigo-400">{s.session_type}</span>
+                            <span>•</span>
+                            <span>{s.duration_hours} Hrs</span>
+                          </div>
+                        </div>
+                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-mono text-fg-tertiary">
+                          0{i+1}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
                 <Link to="/attendance" className="btn-primary w-full inline-block text-center mt-2">
-                  Mark Attendance
+                  Manage Attendance
                 </Link>
               </div>
             ) : (
@@ -200,8 +220,8 @@ export const Dashboard = () => {
                 <div className="w-12 h-12 bg-surface-inset rounded-full flex items-center justify-center mx-auto mb-3">
                   <BookOpen className="w-6 h-6 text-fg-tertiary" />
                 </div>
-                <div className="text-body font-medium mb-1">No session scheduled</div>
-                <div className="text-body-sm text-fg-tertiary mb-4">Create a session to start tracking attendance.</div>
+                <div className="text-body font-medium mb-1">No sessions today</div>
+                <div className="text-body-sm text-fg-tertiary mb-4">Create a session to start tracking.</div>
                 <Link to="/attendance" className="btn-primary inline-flex items-center gap-2">
                   <PlusCircle className="w-4 h-4" />
                   Create Session
@@ -212,22 +232,22 @@ export const Dashboard = () => {
         </Card>
 
         {/* Card 2: Today's Attendance */}
-        <Card className="bg-surface border-border-default">
-          <CardHeader>
+        <Card className="bg-surface border-border-default flex flex-col h-[520px]">
+          <CardHeader className="flex-shrink-0">
             <CardTitle className="text-h3">Today's Attendance</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-y-auto custom-scrollbar flex-1">
             {loading ? (
               <div className="text-fg-secondary">Loading...</div>
-            ) : !todaySession ? (
-              <div className="text-fg-tertiary text-center py-8">Waiting for a session to be created...</div>
+            ) : todaySessions.length === 0 ? (
+              <div className="text-fg-tertiary text-center py-8">Waiting for sessions to be created...</div>
             ) : todayAttendance.present === 0 && todayAttendance.absentees.length === 0 ? (
               <div className="text-fg-tertiary text-center py-8">Attendance not marked yet.</div>
             ) : (
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between text-body-sm mb-2">
-                    <span className="text-fg-secondary">Present</span>
+                    <span className="text-fg-secondary">Overall Participation</span>
                     <span className="font-medium text-fg-primary">{todayAttendance.present} / {todayAttendance.total}</span>
                   </div>
                   <div className="h-2 bg-surface-inset rounded-full overflow-hidden">
@@ -240,24 +260,29 @@ export const Dashboard = () => {
                 
                 {todayAttendance.absentees.length > 0 && (
                   <div>
-                    <div className="text-label text-fg-tertiary mb-2">ABSENTEES</div>
-                    <div className="space-y-2">
-                      {todayAttendance.absentees.slice(0, 5).map((a, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-rose-500/10 border border-rose-500/30">
-                          <div>
-                            <div className="text-body-sm font-bold text-rose-400">{a.students?.name || 'Unknown Student'}</div>
-                            <div className="text-[10px] text-fg-tertiary font-mono uppercase tracking-wider">{a.students?.usn}</div>
+                    <div className="text-label text-fg-tertiary mb-3 uppercase tracking-widest">Absence Records</div>
+                    <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+                      {todayAttendance.absentees.map((a, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all">
+                          <div className="flex-1 min-w-0">
+                            <Link 
+                              to={`/history?search=${encodeURIComponent(a.students?.usn)}`}
+                              className="text-body-sm font-bold text-fg-primary hover:text-indigo-400 transition-colors truncate block"
+                            >
+                              {a.students?.name || 'Unknown Student'}
+                            </Link>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[9px] text-indigo-400 font-bold uppercase tracking-tighter bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                                {a.sessions?.topic}
+                              </span>
+                              <span className="text-[10px] text-fg-tertiary font-mono">{a.students?.usn}</span>
+                            </div>
                           </div>
-                          <div className="w-7 h-7 rounded-full bg-rose-500 flex items-center justify-center text-[10px] font-black text-white shadow-lg shadow-rose-500/20">
+                          <div className="ml-4 w-8 h-8 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-[10px] font-black text-rose-400">
                             A
                           </div>
                         </div>
                       ))}
-                      {todayAttendance.absentees.length > 5 && (
-                        <div className="text-caption text-fg-tertiary text-center pt-2">
-                          + {todayAttendance.absentees.length - 5} more
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
