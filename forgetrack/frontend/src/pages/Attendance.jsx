@@ -162,7 +162,7 @@ export const Attendance = () => {
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-24">
+    <div className="space-y-6 pb-6 animate-in fade-in duration-700">
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
         <div>
@@ -197,33 +197,32 @@ export const Attendance = () => {
         </div>
       </div>
 
-      {/* Calendar Modal */}
       {showCalendarModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
           <div className="absolute inset-0 bg-bg-primary/80 backdrop-blur-md" onClick={() => setShowCalendarModal(false)}></div>
-          <div className="relative w-full max-w-4xl bg-gradient-to-br from-[#0a0a0c] via-[#0d0d12] to-[#110f1a] border border-white/10 rounded-[2.5rem] shadow-[0_0_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
-            <div className="absolute -top-32 -left-32 w-80 h-80 bg-accent-primary/10 blur-[120px] rounded-full"></div>
-            <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-accent-primary/10 blur-[120px] rounded-full"></div>
+          <div className="relative w-full max-w-6xl max-h-[95vh] overflow-y-auto custom-scrollbar bg-gradient-to-br from-[#0a0a0c] via-[#0d0d12] to-[#110f1a] border border-white/10 rounded-[2.5rem] shadow-[0_0_80px_-20px_rgba(0,0,0,0.8)]">
+            <div className="absolute -top-32 -left-32 w-80 h-80 bg-accent-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
+            <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-accent-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
             
-            <div className="relative p-10 flex items-center justify-between border-b border-white/5">
+            <div className="relative p-6 flex items-center justify-between border-b border-white/5 sticky top-0 bg-[#0a0a0c]/80 backdrop-blur-xl z-10">
               <div>
-                <h2 className="text-4xl font-display font-medium tracking-tighter text-white mb-1">{format(currentCalendarMonth, 'MMMM yyyy')}</h2>
+                <h2 className="text-3xl font-display font-medium tracking-tighter text-white mb-1">{format(currentCalendarMonth, 'MMMM yyyy')}</h2>
                 <div className="text-[10px] font-bold tracking-[0.3em] text-accent-primary uppercase">Academic Roadmap</div>
               </div>
-              <div className="flex gap-4">
-                <button onClick={() => setCurrentCalendarMonth(subMonths(currentCalendarMonth, 1))} className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10"><ChevronLeft /></button>
-                <button onClick={() => setCurrentCalendarMonth(addMonths(currentCalendarMonth, 1))} className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10"><ChevronRight /></button>
-                <button onClick={() => setShowCalendarModal(false)} className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-danger/20 hover:text-danger ml-4 transition-all"><Layout className="rotate-45" /></button>
+              <div className="flex gap-3">
+                <button onClick={() => setCurrentCalendarMonth(subMonths(currentCalendarMonth, 1))} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10"><ChevronLeft className="w-5 h-5" /></button>
+                <button onClick={() => setCurrentCalendarMonth(addMonths(currentCalendarMonth, 1))} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10"><ChevronRight className="w-5 h-5" /></button>
+                <button onClick={() => setShowCalendarModal(false)} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-danger/20 hover:text-danger ml-2 transition-all"><Layout className="rotate-45 w-4 h-4" /></button>
               </div>
             </div>
 
-            <div className="p-10">
-              <div className="grid grid-cols-7 gap-4 mb-8">
+            <div className="relative p-6">
+              <div className="grid grid-cols-7 gap-3 mb-4">
                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
                   <div key={day} className="text-center text-xs font-bold text-fg-tertiary uppercase tracking-widest opacity-40">{day}</div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-4">
+              <div className="grid grid-cols-7 gap-3">
                 {(() => {
                   const monthStart = startOfMonth(currentCalendarMonth);
                   const monthEnd = endOfMonth(monthStart);
@@ -238,17 +237,17 @@ export const Attendance = () => {
                     const hasSessions = daySessions.length > 0;
                     return (
                       <div key={day.toString()} onClick={() => { setDate(day); setShowCalendarModal(false); }}
-                        className={`relative min-h-[100px] rounded-2xl cursor-pointer transition-all duration-300 flex flex-col p-4 group ${!isCurrentMonth ? 'opacity-10 grayscale pointer-events-none' : 'opacity-100'} ${hasSessions ? 'bg-accent-primary/5 border border-accent-primary/20 shadow-[inset_0_0_20px_rgba(215,241,74,0.05)]' : 'bg-white/[0.01] border border-white/5 hover:border-accent-primary/30 hover:bg-accent-primary/5'} ${isSelected ? 'border-accent-primary/50 bg-accent-primary/5 ring-1 ring-accent-primary/20' : ''} ${isToday ? 'ring-1 ring-accent-primary/50 ring-offset-2 ring-offset-[#0a0a0c]' : ''}`}>
-                        <div className="flex justify-between items-start mb-3">
-                          <span className={`text-xl font-display font-medium ${hasSessions ? 'text-accent-primary' : 'text-fg-tertiary'}`}>{format(day, 'd')}</span>
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-accent-primary shadow-[0_0_12px_#D7F14A]"></div>}
+                        className={`relative min-h-[80px] rounded-xl cursor-pointer transition-all duration-300 flex flex-col p-3 group ${!isCurrentMonth ? 'opacity-10 grayscale pointer-events-none' : 'opacity-100'} ${hasSessions ? 'bg-accent-primary/5 border border-accent-primary/20 shadow-[inset_0_0_20px_rgba(215,241,74,0.05)]' : 'bg-white/[0.01] border border-white/5 hover:border-accent-primary/30 hover:bg-accent-primary/5'} ${isSelected ? 'border-accent-primary/50 bg-accent-primary/5 ring-1 ring-accent-primary/20' : ''} ${isToday ? 'ring-1 ring-accent-primary/50 ring-offset-2 ring-offset-[#0a0a0c]' : ''}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className={`text-lg font-display font-medium ${hasSessions ? 'text-accent-primary' : 'text-fg-tertiary'}`}>{format(day, 'd')}</span>
+                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-accent-primary shadow-[0_0_12px_#D7F14A]"></div>}
                         </div>
-                        <div className="flex flex-col gap-1.5 overflow-hidden">
+                        <div className="flex flex-col gap-1 overflow-hidden">
                           {daySessions.slice(0, 2).map((s, i) => (
-                            <div key={i} className="text-[10px] leading-snug text-fg-primary truncate font-medium"><span className="text-accent-primary mr-1">•</span> {s.topic}</div>
+                            <div key={i} className="text-[9px] leading-tight text-fg-primary truncate font-medium"><span className="text-accent-primary mr-1">•</span> {s.topic}</div>
                           ))}
                         </div>
-                        {hasSessions && day.getDate() % 10 === 0 && <Activity className="w-4 h-4 text-accent-primary/10 absolute bottom-3 right-3" />}
+                        {hasSessions && day.getDate() % 10 === 0 && <Activity className="w-3 h-3 text-accent-primary/10 absolute bottom-2 right-2" />}
                       </div>
                     );
                   });
@@ -263,16 +262,16 @@ export const Attendance = () => {
       {!loading && !session && (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
           {/* Create Session Card */}
-          <div className="lg:col-span-2 aura-card p-10 relative overflow-hidden group">
+          <div className="lg:col-span-2 aura-card px-8 py-6 relative overflow-hidden group">
             <div className="absolute -top-32 -right-32 w-64 h-64 bg-accent-primary/5 blur-[100px] rounded-full pointer-events-none"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center mb-8">
+              <div className="w-14 h-14 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center mb-6">
                 <BookOpen className="w-7 h-7 text-accent-primary" />
               </div>
               <h2 className="text-3xl font-display font-medium text-white mb-2">Initialize Session</h2>
-              <p className="text-fg-secondary font-medium mb-10">Set up a session tracker for today.</p>
+              <p className="text-fg-secondary font-medium mb-6">Set up a session tracker for today.</p>
               
-              <form onSubmit={handleCreateSession} className="space-y-8">
+              <form onSubmit={handleCreateSession} className="space-y-6">
                 <div className="space-y-3">
                   <label className="text-[11px] font-bold tracking-widest text-fg-tertiary uppercase">Session Topic</label>
                   <div className="relative">
@@ -314,7 +313,7 @@ export const Attendance = () => {
                 </div>
               ) : (
                 sessions.map((s, idx) => (
-                  <div key={s.id} className="aura-card p-8 flex items-center justify-between group hover:border-accent-primary/30">
+                  <div key={s.id} className="aura-card px-8 py-5 flex items-center justify-between group hover:border-accent-primary/30">
                     <div className="flex items-center gap-8">
                       <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center justify-center text-white/20 font-display text-sm font-bold">
                         <span className="text-[10px] opacity-40 uppercase">0{idx+1}</span>
@@ -342,8 +341,8 @@ export const Attendance = () => {
 
       {/* Attendance Interface */}
       {!loading && session && (
-        <div className="aura-card p-10 space-y-10 animate-in slide-in-from-bottom-8 duration-500">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 pb-10 border-b border-white/5">
+        <div className="aura-card px-8 py-6 space-y-6 animate-in slide-in-from-bottom-8 duration-500">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/5">
             <div className="flex items-center gap-8">
               <button onClick={() => setSession(null)} className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-fg-tertiary hover:bg-white/10 hover:text-white transition-all group">
                 <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
@@ -367,7 +366,7 @@ export const Attendance = () => {
               const isPresent = attendance[s.id];
               return (
                 <div key={s.id} onClick={() => toggleStudent(s.id)} 
-                  className={`flex items-center justify-between p-6 rounded-[22px] border-2 cursor-pointer transition-all duration-300 ${isPresent ? 'bg-success/5 border-success/30 shadow-[0_0_20px_rgba(34,197,94,0.05)]' : 'bg-danger/5 border-danger/30 shadow-[0_0_20px_rgba(244,63,94,0.05)]'}`}>
+                  className={`flex items-center justify-between p-5 rounded-[22px] border-2 cursor-pointer transition-all duration-300 ${isPresent ? 'bg-success/5 border-success/30 shadow-[0_0_20px_rgba(34,197,94,0.05)]' : 'bg-danger/5 border-danger/30 shadow-[0_0_20px_rgba(244,63,94,0.05)]'}`}>
                   <div>
                     <div className={`text-lg font-bold ${isPresent ? 'text-success' : 'text-danger'}`}>{s.name}</div>
                     <div className="text-xs font-mono text-fg-tertiary mt-1 opacity-60 uppercase">{s.usn}</div>

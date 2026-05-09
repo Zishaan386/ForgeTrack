@@ -16,9 +16,9 @@ async function checkColumns() {
     const res2 = await client.query(`
       SELECT column_name, data_type 
       FROM information_schema.columns 
-      WHERE table_name = 'attendance' AND table_schema = 'public'
+      WHERE table_name = 'students' AND table_schema = 'public'
     `);
-    console.log("Attendance columns:");
+    console.log("Students columns:");
     console.table(res2.rows);
   } catch (err) {
     console.error(err);

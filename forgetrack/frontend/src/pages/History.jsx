@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Check, ChevronsUpDown, User, Award, Flame, Plus, Trash2, X, Search, Activity, ArrowUpRight, TrendingUp } from 'lucide-react';
+import { Check, ChevronsUpDown, User, Award, Flame, Plus, Trash2, X, Search, Activity, ArrowUpRight, TrendingUp, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -124,7 +124,7 @@ export const History = () => {
                 <Search className="w-4 h-4 opacity-40" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-[300px] p-0 bg-bg-card-solid border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+            <PopoverContent className="w-[300px] p-0 bg-bg-card-solid border-white/5 rounded-lg overflow-hidden shadow-2xl">
               <Command className="bg-transparent">
                 <CommandInput placeholder="Type name or USN..." className="text-fg-primary h-12" />
                 <CommandList className="custom-scrollbar">
@@ -173,6 +173,15 @@ export const History = () => {
       {/* Selected Student Dashboard */}
       {studentData && !loading && (
         <div className="space-y-10 animate-in slide-in-from-bottom-8 duration-700">
+          <button 
+            onClick={() => { setSelectedStudentId(null); setStudentData(null); }}
+            className="flex items-center gap-3 text-fg-tertiary hover:text-white transition-colors w-fit group"
+          >
+            <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Directory</span>
+          </button>
           {/* Stats Row */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <div className="lg:col-span-2 aura-card p-10 flex items-center gap-8 group">

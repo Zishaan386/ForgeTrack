@@ -100,14 +100,14 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-12 pb-20 animate-in fade-in duration-700">
+    <div className="space-y-6 pb-6 animate-in fade-in duration-700">
       {/* Hero Section */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <div>
-          <h1 className="text-6xl md:text-7xl font-display font-medium tracking-tight text-white mb-2">
+          <h1 className="text-5xl md:text-6xl font-display font-medium tracking-tight text-white mb-2">
             Welcome, <span className="text-accent-primary">{profile?.display_name?.split(' ')[0] || 'Member'}</span>
           </h1>
-          <p className="text-lg text-fg-secondary font-medium">Your program overview for {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
+          <p className="text-base text-fg-secondary font-medium">Your program overview for {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
         </div>
         <button 
           onClick={fetchDashboardData} 
@@ -115,12 +115,12 @@ export const Dashboard = () => {
           className="btn-secondary flex items-center gap-2 group"
         >
           <RefreshCw className={`w-4 h-4 text-accent-primary ${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-          <span className="text-xs font-bold uppercase tracking-widest">Update Insights</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest">Update Insights</span>
         </button>
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-danger/10 border border-danger/20 flex items-center justify-between text-danger">
+        <div className="p-4 rounded-xl bg-danger/10 border border-danger/20 flex items-center justify-between text-danger">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5" />
             <span className="text-sm font-semibold">{error}</span>
@@ -130,34 +130,34 @@ export const Dashboard = () => {
       )}
 
       {/* Primary Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total Sessions', value: stats.totalSessions, icon: BookOpen, color: 'text-accent-primary', bg: 'bg-accent-primary/10' },
           { label: 'Overall Attendance', value: `${stats.overallAttendance}%`, icon: Activity, color: 'text-success', bg: 'bg-success/10' },
           { label: 'Active Students', value: stats.activeStudents, icon: Users, color: 'text-accent-cyan', bg: 'bg-accent-cyan/10' },
           { label: 'Last Active', value: stats.lastSessionDate === '-' ? '-' : new Date(stats.lastSessionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
         ].map((stat, i) => (
-          <div key={i} className="stat-tile group">
-            <div className={`icon-bubble ${stat.bg} border-none`}>
-              <stat.icon className={`w-5 h-5 ${stat.color}`} strokeWidth={2} />
+          <div key={i} className="stat-tile group p-5">
+            <div className={`icon-bubble ${stat.bg} border-none w-10 h-10 rounded-xl`}>
+              <stat.icon className={`w-4 h-4 ${stat.color}`} strokeWidth={2} />
             </div>
             <div>
-              <div className="text-[11px] font-bold tracking-[0.15em] text-fg-tertiary uppercase mb-1">{stat.label}</div>
-              <div className="text-4xl font-display font-medium tracking-tight text-white">
+              <div className="text-[10px] font-bold tracking-[0.15em] text-fg-tertiary uppercase mb-1">{stat.label}</div>
+              <div className="text-3xl font-display font-medium tracking-tight text-white">
                 {loading ? <div className="w-16 h-8 bg-white/5 animate-pulse rounded-lg"></div> : stat.value}
               </div>
             </div>
-            <ArrowUpRight className="absolute top-6 right-6 w-4 h-4 text-white/10 group-hover:text-white/40 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+            <ArrowUpRight className="absolute top-4 right-4 w-4 h-4 text-white/10 group-hover:text-white/40 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Today's Agenda */}
-        <div className="lg:col-span-3 aura-card p-10 relative overflow-hidden group">
+        <div className="lg:col-span-3 aura-card p-6 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-accent-primary/5 blur-[100px] pointer-events-none group-hover:bg-accent-primary/10 transition-all duration-700"></div>
           
-          <div className="flex justify-between items-center mb-8 relative z-10">
+          <div className="flex justify-between items-center mb-6 relative z-10">
             <div>
               <h2 className="text-2xl font-display font-medium text-white mb-1">Today's Agenda</h2>
               <div className="flex items-center gap-2">
@@ -216,10 +216,10 @@ export const Dashboard = () => {
         </div>
 
         {/* Live Attendance Pulse */}
-        <div className="lg:col-span-2 aura-card p-10 flex flex-col group relative overflow-hidden">
+        <div className="lg:col-span-2 aura-card p-6 flex flex-col group relative overflow-hidden">
           <div className="absolute top-0 left-0 w-64 h-64 bg-accent-primary/5 blur-[100px] pointer-events-none group-hover:bg-accent-primary/10 transition-all duration-700"></div>
 
-          <h2 className="text-2xl font-display font-medium text-white mb-8 relative z-10">Attendance Pulse</h2>
+          <h2 className="text-2xl font-display font-medium text-white mb-6 relative z-10">Attendance Pulse</h2>
           
           <div className="flex-1 flex flex-col relative z-10">
             {loading ? (

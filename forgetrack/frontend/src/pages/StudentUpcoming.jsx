@@ -30,12 +30,12 @@ export const StudentUpcoming = () => {
   };
 
   return (
-    <div className="space-y-12 pb-24 animate-in fade-in duration-700">
+    <div className="space-y-6 pb-4 animate-in fade-in duration-700">
       <div>
-        <h1 className="text-6xl md:text-7xl font-display font-medium tracking-tight text-white mb-2">
+        <h1 className="text-5xl md:text-6xl font-display font-medium tracking-tight text-white mb-2">
           Upcoming <span className="text-accent-primary">Nodes</span>
         </h1>
-        <p className="text-lg text-fg-secondary font-medium">Synchronize your schedule with the program roadmap.</p>
+        <p className="text-base text-fg-secondary font-medium">Synchronize your schedule with the program roadmap.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -48,10 +48,10 @@ export const StudentUpcoming = () => {
           </div>
         ) : (
           sessions.map((s, i) => (
-            <div key={s.id} className="aura-card p-10 relative overflow-hidden group hover:border-accent-primary/20">
+            <div key={s.id} className="aura-card px-8 py-6 relative overflow-hidden group hover:border-accent-primary/20">
               <div className="absolute top-0 right-0 w-32 h-32 bg-accent-primary/5 blur-[50px] rounded-full pointer-events-none transition-all group-hover:bg-accent-primary/10"></div>
               
-              <div className="flex justify-between items-start mb-8 relative z-10">
+              <div className="flex justify-between items-start mb-6 relative z-10">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center">
                     <Zap className="w-7 h-7 text-accent-primary" />
@@ -68,7 +68,7 @@ export const StudentUpcoming = () => {
                 </div>
               </div>
 
-              <div className="space-y-6 relative z-10">
+              <div className="space-y-4 relative z-10">
                 <h3 className="text-3xl font-display font-medium text-white group-hover:text-accent-primary transition-colors">{s.topic}</h3>
                 
                 <div className="flex items-center gap-8 pt-4 border-t border-white/5">
@@ -83,7 +83,7 @@ export const StudentUpcoming = () => {
                 </div>
               </div>
 
-              <ArrowUpRight className="absolute bottom-10 right-10 w-6 h-6 text-white/5 group-hover:text-accent-primary group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+              <ArrowUpRight className="absolute bottom-6 right-6 w-6 h-6 text-white/5 group-hover:text-accent-primary group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
             </div>
           ))
         )}

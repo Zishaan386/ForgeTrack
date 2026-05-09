@@ -99,7 +99,7 @@ export const Materials = () => {
             <SelectTrigger className="btn-secondary w-[200px] border-none">
               <SelectValue placeholder="Filter Timeline" />
             </SelectTrigger>
-            <SelectContent className="bg-bg-card-solid border-white/5 rounded-2xl">
+            <SelectContent className="bg-[#11131C] border-white/10 shadow-2xl rounded-lg">
               <SelectItem value="all">Entire Program</SelectItem>
               <SelectItem value="4">Cycle 04</SelectItem>
               <SelectItem value="5">Cycle 05</SelectItem>
@@ -119,11 +119,11 @@ export const Materials = () => {
                 <DialogHeader><DialogTitle className="text-3xl font-display font-medium text-white mb-8">New Educational Asset</DialogTitle></DialogHeader>
                 <form onSubmit={handleAddMaterial} className="space-y-8">
                   <div className="space-y-3"><label className="text-[11px] font-bold tracking-widest text-fg-tertiary uppercase">Target Session</label>
-                    <Select value={newSessionId} onValueChange={setNewSessionId} required><SelectTrigger className="w-full px-6 h-14 bg-white/5 border border-white/5 rounded-2xl text-white font-medium"><SelectValue placeholder="Select live session" /></SelectTrigger><SelectContent className="bg-bg-card-solid border-white/5 max-h-[300px]">{sessions.map(s => (<SelectItem key={s.id} value={s.id.toString()}>{format(new Date(s.date), 'MMM d')} — {s.topic}</SelectItem>))}</SelectContent></Select>
+                    <Select value={newSessionId} onValueChange={setNewSessionId} required><SelectTrigger className="w-full px-6 h-14 bg-white/5 border border-white/5 rounded-lg text-white font-medium"><SelectValue placeholder="Select live session" /></SelectTrigger><SelectContent className="bg-[#11131C] border-white/10 shadow-2xl rounded-lg max-h-[300px]">{sessions.map(s => (<SelectItem key={s.id} value={s.id.toString()}>{format(new Date(s.date), 'MMM d')} — {s.topic}</SelectItem>))}</SelectContent></Select>
                   </div>
                   <div className="space-y-3"><label className="text-[11px] font-bold tracking-widest text-fg-tertiary uppercase">Asset Title</label><input type="text" className="w-full px-6 h-14 bg-white/5 border border-white/5 rounded-2xl focus:outline-none focus:border-accent-primary/30 text-white font-medium" value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="e.g. System Design Cheat Sheet" required /></div>
                   <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3"><label className="text-[11px] font-bold tracking-widest text-fg-tertiary uppercase">Asset Type</label><Select value={newType} onValueChange={setNewType} required><SelectTrigger className="w-full px-6 h-14 bg-white/5 border border-white/5 rounded-2xl text-white font-medium"><SelectValue placeholder="Format" /></SelectTrigger><SelectContent className="bg-bg-card-solid border-white/5"><SelectItem value="slides">Slides Deck</SelectItem><SelectItem value="recording">Video Stream</SelectItem><SelectItem value="document">Technical Doc</SelectItem><SelectItem value="link">External Link</SelectItem></SelectContent></Select></div>
+                    <div className="space-y-3"><label className="text-[11px] font-bold tracking-widest text-fg-tertiary uppercase">Asset Type</label><Select value={newType} onValueChange={setNewType} required><SelectTrigger className="w-full px-6 h-14 bg-white/5 border border-white/5 rounded-lg text-white font-medium"><SelectValue placeholder="Format" /></SelectTrigger><SelectContent className="bg-[#11131C] border-white/10 shadow-2xl rounded-lg"><SelectItem value="slides">Slides Deck</SelectItem><SelectItem value="recording">Video Stream</SelectItem><SelectItem value="document">Technical Doc</SelectItem><SelectItem value="link">External Link</SelectItem></SelectContent></Select></div>
                     <div className="space-y-3"><label className="text-[11px] font-bold tracking-widest text-fg-tertiary uppercase">Resource URL</label><input type="url" className="w-full px-6 h-14 bg-white/5 border border-white/5 rounded-2xl focus:outline-none focus:border-accent-primary/30 text-white font-medium" value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://..." required /></div>
                   </div>
                   <button type="submit" disabled={adding} className="btn-primary w-full h-16 mt-4 text-lg font-bold">{adding ? 'Sequencing...' : 'Authorize Asset'}</button>

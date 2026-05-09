@@ -46,6 +46,22 @@ export const Upload = () => {
   const [weeklyPattern, setWeeklyPattern] = useState('Mon, Wed, Fri');
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
+  const safeFormatDate = (dateStr) => {
+    if (!dateStr) return 'Unknown Date';
+    try {
+      const parsed = parseISO(dateStr);
+      if (isNaN(parsed.getTime())) {
+        // Fallback if parseISO fails (e.g. AI returned weird format)
+        const fallback = new Date(dateStr);
+        if (!isNaN(fallback.getTime())) return format(fallback, 'MMM d, yyyy');
+        return dateStr; 
+      }
+      return format(parsed, 'MMM d, yyyy');
+    } catch {
+      return dateStr;
+    }
+  };
+
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
@@ -64,8 +80,8 @@ export const Upload = () => {
           handleSheetSelection(wb.SheetNames[0]);
         } else {
           setStep(2);
+          setLoading(false);
         }
-        setLoading(false);
       };
       reader.readAsBinaryString(selectedFile);
     } catch (err) {
@@ -189,7 +205,7 @@ export const Upload = () => {
             .from('sessions')
             .insert({ 
               date, 
-              topic: sessionMapping.raw_header, 
+              topic: sessionMapping.raw_header || 'Imported Session', 
               month_number: new Date(date).getMonth() + 1 
             })
             .select()
@@ -200,27 +216,58 @@ export const Upload = () => {
 
         // 2. Prepare Attendance Records
         const attendanceRecords = processedData.map((row, idx) => {
-          const usn = row[aiMapping.mapping.usn_col_index];
-          if (!usn) return null;
+          const usnStr = row[aiMapping.mapping.usn_col_index];
+          const nameStr = row[aiMapping.mapping.name_col_index];
+          if (!usnStr) return null;
+          
+          const usn = String(usnStr).trim();
+          const name = nameStr ? String(nameStr).trim() : 'Unknown';
 
           const val = String(row[sessionMapping.col_index] || "").toLowerCase();
           const isPresent = aiMapping.indicators.present_values.some(p => val.includes(p.toLowerCase()));
           
-          return { usn, isPresent };
+          return { usn, name, isPresent };
         }).filter(Boolean);
 
         if (attendanceRecords.length === 0) continue;
 
-        // 3. Resolve Student IDs (Bulk)
-        const usns = [...new Set(attendanceRecords.map(r => r.usn))];
-        const { data: students, error: stuErr } = await supabase
+        // 3. Resolve Student IDs (Bulk) & Add Missing Students
+        const uniqueUsns = [...new Set(attendanceRecords.map(r => r.usn))];
+        const { data: existingStudents, error: stuErr } = await supabase
           .from('students')
           .select('id, usn')
-          .in('usn', usns);
+          .in('usn', uniqueUsns);
         
         if (stuErr) throw new Error(`Failed to fetch student IDs: ${stuErr.message}`);
         
-        const usnToId = Object.fromEntries(students.map(s => [s.usn, s.id]));
+        const existingUsns = new Set(existingStudents.map(s => s.usn));
+        const newUsns = uniqueUsns.filter(usn => !existingUsns.has(usn));
+        
+        let allStudents = [...existingStudents];
+        
+        if (newUsns.length > 0) {
+          const newStudentsToInsert = newUsns.map(usn => {
+            const record = attendanceRecords.find(r => r.usn === usn);
+            return { 
+              usn: usn, 
+              name: record.name, 
+              is_active: true,
+              branch_code: 'TBD',
+              batch: 'TBD',
+              admission_number: 'TBD'
+            };
+          });
+          
+          const { data: insertedStudents, error: insErr } = await supabase
+            .from('students')
+            .insert(newStudentsToInsert)
+            .select('id, usn');
+            
+          if (insErr) throw new Error(`Failed to insert new students: ${insErr.message}`);
+          allStudents = [...allStudents, ...insertedStudents];
+        }
+        
+        const usnToId = Object.fromEntries(allStudents.map(s => [s.usn, s.id]));
 
         const finalAttendance = attendanceRecords.map(r => {
           const studentId = usnToId[r.usn];
@@ -260,17 +307,17 @@ export const Upload = () => {
     switch (step) {
       case 1:
         return (
-          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="relative group border-2 border-dashed border-white/5 rounded-[3rem] p-24 bg-white/[0.01] hover:bg-white/[0.02] hover:border-accent-primary/20 transition-all cursor-pointer flex flex-col items-center justify-center text-center shadow-2xl">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="relative group border-2 border-dashed border-white/5 rounded-[2.5rem] px-16 py-12 bg-white/[0.01] hover:bg-white/[0.02] hover:border-accent-primary/20 transition-all cursor-pointer flex flex-col items-center justify-center text-center shadow-2xl">
               <input type="file" accept=".csv,.xlsx" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={handleFileChange} />
-              <div className="w-28 h-28 rounded-full bg-accent-primary/10 flex items-center justify-center mb-10 transition-all duration-700 group-hover:scale-110 shadow-[0_0_50px_rgba(215,241,74,0.1)]">
-                <UploadIcon className="w-12 h-12 text-accent-primary" />
+              <div className="w-20 h-20 rounded-full bg-accent-primary/10 flex items-center justify-center mb-8 transition-all duration-700 group-hover:scale-110 shadow-[0_0_50px_rgba(215,241,74,0.1)]">
+                <UploadIcon className="w-8 h-8 text-accent-primary" />
               </div>
-              <h2 className="text-3xl font-display font-medium text-white mb-3">Initialize Archival Stream</h2>
-              <p className="text-fg-tertiary font-medium">Stash CSV or XLSX files here to begin sequencing.</p>
-              <div className="mt-10 flex gap-4">
-                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest opacity-40">Excel Ready</div>
-                <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest opacity-40">AI-ML Enabled</div>
+              <h2 className="text-2xl font-display font-medium text-white mb-2">Initialize Archival Stream</h2>
+              <p className="text-sm text-fg-tertiary font-medium">Stash CSV or XLSX files here to begin sequencing.</p>
+              <div className="mt-8 flex gap-3">
+                <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black uppercase tracking-widest opacity-40">Excel Ready</div>
+                <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[9px] font-black uppercase tracking-widest opacity-40">AI-ML Enabled</div>
               </div>
             </div>
           </div>
@@ -306,13 +353,13 @@ export const Upload = () => {
 
       case 3:
         return (
-          <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-700">
-            <div className="flex items-center justify-between mb-10">
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-700">
+            <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-accent-primary/10 flex items-center justify-center">
                   <Brain className="w-5 h-5 text-accent-primary" />
                 </div>
-                <h2 className="text-3xl font-display font-medium text-white">AI Reasoning Matrix</h2>
+                <h2 className="text-2xl font-display font-medium text-white">AI Reasoning Matrix</h2>
               </div>
               {loading && <div className="flex items-center gap-3 text-accent-primary text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">
                 <Sparkles className="w-4 h-4" /> Analyzing Headers
@@ -320,61 +367,67 @@ export const Upload = () => {
             </div>
 
             {aiMapping && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="aura-card p-10 space-y-8 bg-accent-primary/[0.02]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="aura-card px-8 py-6 space-y-6 bg-accent-primary/[0.02]">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-primary">Identified Schema (Manual Override Available)</h3>
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-fg-tertiary uppercase tracking-widest">Student Name Column</label>
-                      <select 
-                        value={aiMapping.mapping.name_col_index}
-                        onChange={(e) => setAiMapping({
-                          ...aiMapping,
-                          mapping: { ...aiMapping.mapping, name_col_index: parseInt(e.target.value) }
-                        })}
-                        className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:outline-none focus:border-accent-primary/40 appearance-none cursor-pointer"
-                      >
-                        {aiMapping.headers?.map((h, idx) => (
-                          <option key={idx} value={idx} className="bg-bg-card-solid">Col {idx + 1}: {h || 'Unnamed'}</option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <select 
+                          value={aiMapping.mapping.name_col_index}
+                          onChange={(e) => setAiMapping({
+                            ...aiMapping,
+                            mapping: { ...aiMapping.mapping, name_col_index: parseInt(e.target.value) }
+                          })}
+                          className="w-full h-10 bg-white/5 border border-white/10 rounded-xl pl-4 pr-10 text-sm text-white focus:outline-none focus:border-accent-primary/40 appearance-none cursor-pointer hover:bg-white/[0.08] transition-colors"
+                        >
+                          {aiMapping.headers?.map((h, idx) => (
+                            <option key={idx} value={idx} className="bg-bg-card-solid">Col {idx + 1}: {h || 'Unnamed'}</option>
+                          ))}
+                        </select>
+                        <ChevronRight className="w-4 h-4 text-fg-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none rotate-90" />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-fg-tertiary uppercase tracking-widest">Student USN Column</label>
-                      <select 
-                        value={aiMapping.mapping.usn_col_index}
-                        onChange={(e) => setAiMapping({
-                          ...aiMapping,
-                          mapping: { ...aiMapping.mapping, usn_col_index: parseInt(e.target.value) }
-                        })}
-                        className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm text-white focus:outline-none focus:border-accent-primary/40 appearance-none cursor-pointer"
-                      >
-                        {aiMapping.headers?.map((h, idx) => (
-                          <option key={idx} value={idx} className="bg-bg-card-solid">Col {idx + 1}: {h || 'Unnamed'}</option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <select 
+                          value={aiMapping.mapping.usn_col_index}
+                          onChange={(e) => setAiMapping({
+                            ...aiMapping,
+                            mapping: { ...aiMapping.mapping, usn_col_index: parseInt(e.target.value) }
+                          })}
+                          className="w-full h-10 bg-white/5 border border-white/10 rounded-xl pl-4 pr-10 text-sm text-white focus:outline-none focus:border-accent-primary/40 appearance-none cursor-pointer hover:bg-white/[0.08] transition-colors"
+                        >
+                          {aiMapping.headers?.map((h, idx) => (
+                            <option key={idx} value={idx} className="bg-bg-card-solid">Col {idx + 1}: {h || 'Unnamed'}</option>
+                          ))}
+                        </select>
+                        <ChevronRight className="w-4 h-4 text-fg-tertiary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none rotate-90" />
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="pt-6 border-t border-white/5">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-primary mb-6">Attendance Indicators</h3>
-                    <div className="flex gap-3">
+                  <div className="pt-4 border-t border-white/5">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-primary mb-4">Attendance Indicators</h3>
+                    <div className="flex gap-2">
                       {aiMapping.indicators.present_values.map(v => (
-                        <span key={v} className="px-4 py-2 rounded-xl bg-success/10 border border-success/20 text-success text-[10px] font-black uppercase tracking-widest">{v}</span>
+                        <span key={v} className="px-3 py-1.5 rounded-lg bg-success/10 border border-success/20 text-success text-[9px] font-black uppercase tracking-widest">{v}</span>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                <div className="aura-card p-10 space-y-8">
+                <div className="aura-card px-8 py-6 space-y-6">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-fg-tertiary">Detected Sessions ({aiMapping.sessions.length})</h3>
-                  <div className="max-h-[300px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                  <div className="max-h-[250px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                     {aiMapping.sessions.map((s, i) => (
-                      <div key={i} className="p-4 rounded-xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
+                      <div key={i} className="p-3 rounded-lg bg-white/[0.03] border border-white/5 flex items-center justify-between">
                         <span className="text-xs font-bold text-white">{s.raw_header}</span>
                         {s.detected_date ? (
-                          <span className="text-[10px] font-black text-accent-primary uppercase tracking-widest">{format(parse(s.detected_date, 'yyyy-MM-dd', new Date()), 'MMM d, yyyy')}</span>
+                          <span className="text-[10px] font-black text-accent-primary uppercase tracking-widest">{safeFormatDate(s.detected_date)}</span>
                         ) : (
                           <span className="text-[10px] font-black text-warning uppercase tracking-widest">Date Missing</span>
                         )}
@@ -386,31 +439,31 @@ export const Upload = () => {
             )}
 
             {useInference && (
-              <div className="aura-card p-10 bg-warning/[0.02] border-warning/20 animate-in zoom-in">
-                <div className="flex items-center gap-4 mb-8 text-warning">
-                  <Calendar className="w-6 h-6" />
-                  <h3 className="text-xl font-display font-medium">Inference Required</h3>
+              <div className="aura-card px-8 py-6 bg-warning/[0.02] border-warning/20 animate-in zoom-in">
+                <div className="flex items-center gap-4 mb-6 text-warning">
+                  <Calendar className="w-5 h-5" />
+                  <h3 className="text-lg font-display font-medium">Inference Required</h3>
                 </div>
-                <p className="text-sm text-fg-secondary mb-8">Some sessions are missing explicit dates. Provide your weekly pattern to project actual dates.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <p className="text-sm text-fg-secondary mb-6">Some sessions are missing explicit dates. Provide your weekly pattern to project actual dates.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-fg-tertiary">Class Pattern</label>
-                    <input value={weeklyPattern} onChange={e => setWeeklyPattern(e.target.value)} placeholder="e.g. Mon, Wed, Fri" className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm focus:outline-none focus:border-accent-primary/40" />
+                    <input value={weeklyPattern} onChange={e => setWeeklyPattern(e.target.value)} placeholder="e.g. Mon, Wed, Fri" className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-4 text-sm focus:outline-none focus:border-accent-primary/40" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-fg-tertiary">Start Date</label>
-                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm focus:outline-none focus:border-accent-primary/40" />
+                    <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-4 text-sm focus:outline-none focus:border-accent-primary/40" />
                   </div>
                 </div>
-                <button onClick={handleInference} className="btn-primary w-full h-14 font-bold flex items-center justify-center gap-3">
-                  <Brain className="w-5 h-5" /> Project Dates
+                <button onClick={handleInference} className="btn-primary w-full h-12 font-bold flex items-center justify-center gap-2">
+                  <Brain className="w-4 h-4" /> Project Dates
                 </button>
               </div>
             )}
 
             {!useInference && aiMapping && (
-              <button onClick={() => checkConflicts(aiMapping)} className="btn-primary w-full h-16 text-lg font-bold flex items-center justify-center gap-3 shadow-xl shadow-accent-primary/20">
-                Continue to Verification <ArrowRight className="w-5 h-5" />
+              <button onClick={() => checkConflicts(aiMapping)} className="btn-primary w-full h-14 text-base font-bold flex items-center justify-center gap-3 shadow-xl shadow-accent-primary/20">
+                Continue to Verification <ArrowRight className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -418,20 +471,20 @@ export const Upload = () => {
 
       case 4:
         return (
-          <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-700">
-            <div className="flex items-center gap-4 mb-10">
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-700">
+            <div className="flex items-center gap-4 mb-8">
               <div className="w-10 h-10 rounded-xl bg-accent-primary/10 flex items-center justify-center">
                 <Database className="w-5 h-5 text-accent-primary" />
               </div>
-              <h2 className="text-3xl font-display font-medium text-white">Conflict Resolution</h2>
+              <h2 className="text-2xl font-display font-medium text-white">Conflict Resolution</h2>
             </div>
 
-            <div className="aura-card p-10 space-y-8">
-              <h3 className="text-lg font-display font-medium text-white">Integrity Check Results</h3>
+            <div className="aura-card px-8 py-6 space-y-6">
+              <h3 className="text-base font-display font-medium text-white">Integrity Check Results</h3>
               {conflicts.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="p-6 rounded-2xl bg-warning/5 border border-warning/20 flex items-center gap-5">
-                    <AlertCircle className="w-8 h-8 text-warning" />
+                  <div className="p-4 rounded-xl bg-warning/5 border border-warning/20 flex items-center gap-4">
+                    <AlertCircle className="w-6 h-6 text-warning" />
                     <div>
                       <div className="text-sm font-bold text-white mb-1">Found {conflicts.length} overlapping sessions.</div>
                       <p className="text-xs text-fg-secondary">Importing will merge new data with existing records for these dates.</p>
@@ -439,55 +492,55 @@ export const Upload = () => {
                   </div>
                   <div className="max-h-[200px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                     {conflicts.map((c, i) => (
-                      <div key={i} className="px-4 py-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-between">
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">{format(parseISO(c.date), 'MMM d, yyyy')}</span>
+                      <div key={i} className="px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest">{safeFormatDate(c.date)}</span>
                         <span className="text-xs text-fg-tertiary italic">{c.topic}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="p-10 text-center bg-success/[0.02] border border-success/10 rounded-[2rem]">
-                  <CheckCircle className="w-12 h-12 text-success mx-auto mb-4 opacity-40" />
-                  <div className="text-lg font-bold text-success mb-1">Clean Slate</div>
+                <div className="p-8 text-center bg-success/[0.02] border border-success/10 rounded-2xl">
+                  <CheckCircle className="w-10 h-10 text-success mx-auto mb-3 opacity-40" />
+                  <div className="text-base font-bold text-success mb-1">Clean Slate</div>
                   <p className="text-sm text-fg-tertiary">No existing sessions found for these dates. Ready for full deployment.</p>
                 </div>
               )}
             </div>
 
-            <button onClick={executeImport} disabled={loading} className="btn-primary w-full h-20 text-xl font-bold flex items-center justify-center gap-4 shadow-2xl shadow-accent-primary/20">
-              {loading ? <><Loader2 className="w-6 h-6 animate-spin" /> Sequencing Database...</> : <><Sparkles className="w-6 h-6" /> Execute Deployment</>}
+            <button onClick={executeImport} disabled={loading} className="btn-primary w-full h-16 text-lg font-bold flex items-center justify-center gap-3 shadow-xl shadow-accent-primary/20">
+              {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Sequencing Database...</> : <><Sparkles className="w-5 h-5" /> Execute Deployment</>}
             </button>
           </div>
         );
 
       case 5:
         return (
-          <div className="space-y-12 animate-in zoom-in duration-700 text-center py-10">
-            <div className="w-32 h-32 rounded-full bg-success/10 border border-success/20 flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(34,197,94,0.1)]">
-              <CheckCircle className="w-16 h-16 text-success" />
+          <div className="space-y-8 animate-in zoom-in duration-700 text-center py-8">
+            <div className="w-24 h-24 rounded-full bg-success/10 border border-success/20 flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(34,197,94,0.1)]">
+              <CheckCircle className="w-12 h-12 text-success" />
             </div>
-            <h2 className="text-5xl font-display font-medium text-white mb-2">Ingestion Complete</h2>
-            <p className="text-xl text-fg-secondary max-w-xl mx-auto mb-10">Successfully synchronized <span className="text-accent-primary font-bold">{results?.total}</span> attendance records with the ForgeTrack matrix.</p>
+            <h2 className="text-4xl font-display font-medium text-white mb-2">Ingestion Complete</h2>
+            <p className="text-lg text-fg-secondary max-w-lg mx-auto mb-8">Successfully synchronized <span className="text-accent-primary font-bold">{results?.total}</span> attendance records.</p>
             
             {results?.details && results.details.length > 0 && (
-              <div className="max-w-2xl mx-auto text-left mb-12 aura-card p-8 bg-white/[0.02]">
-                <h3 className="text-sm font-bold text-fg-tertiary uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Session Summary</h3>
-                <div className="max-h-[250px] overflow-y-auto space-y-3 custom-scrollbar pr-2">
+              <div className="max-w-xl mx-auto text-left mb-8 aura-card p-6 bg-white/[0.02]">
+                <h3 className="text-xs font-bold text-fg-tertiary uppercase tracking-widest mb-4 border-b border-white/5 pb-3">Session Summary</h3>
+                <div className="max-h-[200px] overflow-y-auto space-y-2 custom-scrollbar pr-2">
                   {results.details.map((detail, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] border border-white/5">
                       <div>
-                        <div className="text-[10px] font-black text-accent-primary uppercase tracking-widest mb-1">{format(parseISO(detail.date), 'MMM d, yyyy')}</div>
+                        <div className="text-[10px] font-black text-accent-primary uppercase tracking-widest mb-1">{safeFormatDate(detail.date)}</div>
                         <div className="text-sm font-medium text-white">{detail.topic}</div>
                       </div>
-                      <div className="text-2xl font-display font-bold text-success">+{detail.count}</div>
+                      <div className="text-xl font-display font-bold text-success">+{detail.count}</div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
               <button onClick={() => {
                 setStep(1);
                 setFile(null);
@@ -498,10 +551,10 @@ export const Upload = () => {
                 setProcessedData([]);
                 setConflicts([]);
                 setResults(null);
-              }} className="btn-primary px-10 h-16 text-lg font-bold flex items-center justify-center gap-3">
+              }} className="btn-primary px-8 h-14 text-base font-bold flex items-center justify-center gap-2">
                  Start New Sequence
               </button>
-              <button onClick={() => window.location.href = '/dashboard'} className="px-10 h-16 rounded-[22px] bg-white/5 border border-white/10 text-lg font-bold text-white hover:bg-white/10 transition-all flex items-center justify-center">
+              <button onClick={() => window.location.href = '/dashboard'} className="px-8 h-14 rounded-xl bg-white/5 border border-white/10 text-base font-bold text-white hover:bg-white/10 transition-all flex items-center justify-center">
                 Return to Dashboard
               </button>
             </div>
@@ -515,13 +568,13 @@ export const Upload = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-24">
+    <div className="max-w-5xl mx-auto space-y-6 pb-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-6xl md:text-7xl font-display font-medium tracking-tight text-white mb-2">
+          <h1 className="text-5xl md:text-6xl font-display font-medium tracking-tight text-white mb-2">
             AI <span className="text-accent-primary">Import</span>
           </h1>
-          <p className="text-lg text-fg-secondary font-medium">Neural processing for bulk archival streams.</p>
+          <p className="text-base text-fg-secondary font-medium">Neural processing for bulk archival streams.</p>
         </div>
         
         {/* Progress Tracker */}

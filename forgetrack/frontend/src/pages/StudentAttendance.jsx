@@ -180,33 +180,33 @@ export const StudentAttendance = () => {
   };
 
   return (
-    <div className="space-y-12 pb-24 animate-in fade-in duration-700">
+    <div className="space-y-6 pb-4 animate-in fade-in duration-700">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
         <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-accent-primary" />
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-xl bg-accent-primary/10 border border-accent-primary/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-accent-primary" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-primary">Performance Hub</span>
           </div>
-          <h1 className="text-6xl md:text-7xl font-display font-medium tracking-tight text-white mb-2">
+          <h1 className="text-5xl md:text-6xl font-display font-medium tracking-tight text-white mb-2">
             My <span className="text-accent-primary">Presence</span>
           </h1>
-          <p className="text-lg text-fg-secondary font-medium">Tracking your academic consistency and program engagement.</p>
+          <p className="text-base text-fg-secondary font-medium">Tracking your academic consistency and program engagement.</p>
         </div>
         
-        <div className="flex bg-white/5 p-1.5 rounded-[22px] border border-white/10 shadow-2xl backdrop-blur-xl">
+        <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-xl">
           <button 
             onClick={() => setViewMode('list')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${viewMode === 'list' ? 'bg-accent-primary text-bg-primary shadow-lg shadow-accent-primary/30' : 'text-fg-tertiary hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${viewMode === 'list' ? 'bg-accent-primary text-bg-primary shadow-lg shadow-accent-primary/30' : 'text-fg-tertiary hover:text-white hover:bg-white/5'}`}
           >
             <List className="w-3.5 h-3.5" />
             List
           </button>
           <button 
             onClick={() => setViewMode('calendar')}
-            className={`flex items-center gap-2 px-6 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${viewMode === 'calendar' ? 'bg-accent-primary text-bg-primary shadow-lg shadow-accent-primary/30' : 'text-fg-tertiary hover:text-white hover:bg-white/5'}`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${viewMode === 'calendar' ? 'bg-accent-primary text-bg-primary shadow-lg shadow-accent-primary/30' : 'text-fg-tertiary hover:text-white hover:bg-white/5'}`}
           >
             <CalendarIcon className="w-3.5 h-3.5" />
             Calendar
@@ -215,32 +215,32 @@ export const StudentAttendance = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Attendance Rate', value: `${stats.percentage}%`, icon: Award, color: 'text-accent-primary', bg: 'bg-accent-primary/10' },
           { label: 'Current Streak', value: stats.currentStreak, icon: Flame, color: 'text-accent-primary', bg: 'bg-accent-primary/10' },
           { label: 'Total Sessions', value: stats.totalSessions, icon: BookOpen, color: 'text-accent-cyan', bg: 'bg-accent-cyan/10' },
           { label: 'Performance', value: stats.percentage > 85 ? 'Elite' : 'Steady', icon: Activity, color: 'text-success', bg: 'bg-success/10' },
         ].map((stat, i) => (
-          <div key={i} className="stat-tile group overflow-hidden">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/[0.02] rounded-full blur-2xl group-hover:bg-accent-primary/5 transition-all duration-700"></div>
-            <div className={`icon-bubble ${stat.bg} border-none`}>
-              <stat.icon className={`w-5 h-5 ${stat.color}`} />
+          <div key={i} className="stat-tile group overflow-hidden p-5">
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/[0.02] rounded-full blur-xl group-hover:bg-accent-primary/5 transition-all duration-700"></div>
+            <div className={`icon-bubble ${stat.bg} border-none w-10 h-10 rounded-xl`}>
+              <stat.icon className={`w-4 h-4 ${stat.color}`} />
             </div>
             <div>
-              <div className="text-[11px] font-bold tracking-widest text-fg-tertiary uppercase mb-1">{stat.label}</div>
-              <div className="text-4xl font-display font-medium text-white group-hover:text-accent-primary transition-colors duration-500">
+              <div className="text-[10px] font-bold tracking-widest text-fg-tertiary uppercase mb-1">{stat.label}</div>
+              <div className="text-3xl font-display font-medium text-white group-hover:text-accent-primary transition-colors duration-500">
                 {loading ? <div className="w-16 h-8 bg-white/5 animate-pulse rounded-lg"></div> : stat.value}
               </div>
             </div>
-            <ArrowUpRight className="absolute top-6 right-6 w-4 h-4 text-white/10 group-hover:text-accent-primary transition-all duration-500" />
+            <ArrowUpRight className="absolute top-4 right-4 w-4 h-4 text-white/10 group-hover:text-accent-primary transition-all duration-500" />
           </div>
         ))}
       </div>
 
       {/* View Content */}
-      <div className="aura-card p-12 min-h-[600px] relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-primary/5 blur-[150px] pointer-events-none group-hover:bg-accent-primary/10 transition-all duration-1000"></div>
+      <div className="aura-card px-8 py-6 min-h-[400px] relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-accent-primary/5 blur-[120px] pointer-events-none group-hover:bg-accent-primary/10 transition-all duration-1000"></div>
 
         <div className="flex items-center justify-between mb-12 relative z-10">
           <div className="flex items-center gap-4">
@@ -285,7 +285,7 @@ export const StudentAttendance = () => {
               </div>
             ) : (
               history.map((h, i) => (
-                <div key={i} className="p-8 rounded-[32px] bg-white/[0.03] border border-white/5 flex items-center justify-between group/item hover:bg-white/[0.06] hover:border-accent-primary/20 transition-all duration-500 shadow-xl">
+                <div key={i} className="px-6 py-5 rounded-[24px] bg-white/[0.03] border border-white/5 flex items-center justify-between group/item hover:bg-white/[0.06] hover:border-accent-primary/20 transition-all duration-500 shadow-xl">
                   <div className="flex items-center gap-8">
                     <div className={`w-1.5 h-16 rounded-full transition-all duration-500 ${h.present ? 'bg-accent-primary shadow-[0_0_20px_rgba(215,241,74,0.4)]' : 'bg-danger shadow-[0_0_20px_rgba(244,63,94,0.4)] group-hover/item:scale-y-110'}`}></div>
                     <div>
@@ -309,24 +309,24 @@ export const StudentAttendance = () => {
 
       {/* Detail Modal */}
       <Dialog open={!!selectedDay} onOpenChange={(open) => !open && setSelectedDay(null)}>
-        <DialogContent className="aura-card border border-white/10 w-[95vw] sm:max-w-5xl p-10 animate-in zoom-in duration-500 bg-bg-card-solid/95 backdrop-blur-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
+        <DialogContent className="aura-card border border-white/10 w-[95vw] sm:max-w-5xl px-8 py-6 animate-in zoom-in duration-500 bg-bg-card-solid/95 backdrop-blur-3xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] overflow-hidden">
           <DialogHeader>
-            <DialogTitle className="text-4xl font-display font-medium text-white mb-10 flex items-center gap-4">
+            <DialogTitle className="text-4xl font-display font-medium text-white mb-6 flex items-center gap-4">
                {selectedDay && format(selectedDay, 'MMM d')} <span className="text-accent-primary">Overview</span>
                <div className="flex-1 h-px bg-white/5"></div>
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-10">
+          <div className="space-y-6">
             {selectedDaySessions.length > 0 ? (
               <>
                 <div className="text-[10px] font-black tracking-[0.3em] text-fg-tertiary uppercase mb-2 flex items-center gap-3">
                   <Activity className="w-3 h-3 text-accent-primary" />
                   Session Logs
                 </div>
-                <div className="flex gap-5 overflow-x-auto pb-6 custom-scrollbar snap-x snap-mandatory">
+                <div className="flex gap-5 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory">
                   {selectedDaySessions.map((s, i) => (
-                    <div key={i} className={`flex-shrink-0 w-[280px] snap-start p-8 rounded-[28px] border transition-all duration-500 group/modal ${s.present ? 'bg-white/[0.03] border-white/10 hover:border-accent-primary/20' : 'bg-danger/[0.03] border-danger/10 hover:bg-danger/[0.05]'}`}>
-                      <div className="flex items-center justify-between mb-6">
+                    <div key={i} className={`flex-shrink-0 w-[280px] snap-start px-6 py-5 rounded-[24px] border transition-all duration-500 group/modal ${s.present ? 'bg-white/[0.03] border-white/10 hover:border-accent-primary/20' : 'bg-danger/[0.03] border-danger/10 hover:bg-danger/[0.05]'}`}>
+                      <div className="flex items-center justify-between mb-4">
                         <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg ${s.present ? 'bg-accent-primary/10 text-accent-primary shadow-accent-primary/5' : 'bg-danger/20 text-danger shadow-danger/10'}`}>
                           {s.present ? 'Present' : 'Absent'}
                         </span>
